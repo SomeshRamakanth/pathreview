@@ -27,7 +27,7 @@ four currently-failing tests in `tests/unit/test_pii_scrubber.py`
 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
-**Cohort ledger:** [ ] Issue added to cohort ledger
+**Cohort ledger:** [x] Issue added to cohort ledger
 
 ### Selection notes — "Is this issue right for me?"
 
