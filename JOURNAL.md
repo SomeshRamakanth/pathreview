@@ -25,7 +25,7 @@ four currently-failing tests in `tests/unit/test_pii_scrubber.py`
 
 **Branch name:** fix/146-pii-scrubber-parenthesized-phone
 
-**Setup confirmation:** [ ] App runs locally at localhost:5173
+**Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [ ] Issue added to cohort ledger
 
