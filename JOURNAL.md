@@ -48,3 +48,31 @@ four currently-failing tests in `tests/unit/test_pii_scrubber.py`
 - **Risk of scope creep is low.** The main thing to watch is not over-widening
   the regex (e.g. catching non-phone number sequences), which I'll guard against
   by keeping the existing passing tests green.
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** https://github.com/SomeshRamakanth/pathreview/commit/9bdf739
+
+**Reproduction summary:**
+I ran the affected unit tests with `./.venv/Scripts/pytest tests/unit/test_pii_scrubber.py -v`
+and confirmed 4 phone-number tests fail because `(555) 123-4567` and
+`+1 555 123 4567` are left un-redacted. Running the issue's snippet directly,
+`scrub('Call me at (555) 123-4567 or 555-123-4567')` returned
+`'Call me at (555) 123-4567 or [REDACTED]'` (the parenthesized number survived)
+and `detect('(555) 123-4567')` returned `[]` — matching the issue exactly.
+Steps are documented in [REPRODUCTION.md](REPRODUCTION.md).
+
+**PLAN.md link:** https://github.com/SomeshRamakanth/pathreview/blob/fix/146-pii-scrubber-parenthesized-phone/PLAN.md
+
+**Walkthrough video (recommended):** _(optional / not graded — not recorded)_
+
+**Blockers or open questions:**
+- Main open question: whether simply widening the separator class from `[-.]?`
+  to `[-.\s]?` is sufficient, or whether a stricter multi-alternation pattern is
+  safer against false positives. I'll start minimal and escalate only if a
+  regression appears.
+- Need to confirm in Week 9 that `detect()` still reports sensible
+  `value`/`start`/`end` for `(555) 123-4567` (the leading `(` may fall outside
+  the match because of the `\b` anchor).
+- Note: a fifth test, `test_mixed_pii_and_text`, also fails, but from an
+  unrelated over-broad `street_address` regex — out of scope for #146.
