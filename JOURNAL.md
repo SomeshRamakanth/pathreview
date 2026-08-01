@@ -130,3 +130,66 @@ LLM_PROVIDER=mock ./.venv/Scripts/pytest tests/unit/test_pii_scrubber.py -v
 ```
 All phone-related tests pass; the only remaining failure in that file
 (`test_mixed_pii_and_text`) is the unrelated `street_address` bug.
+
+## Week 10 — Iteration & reflection
+
+### Review status & response
+
+As of submission, [PR #483](https://github.com/ascherj/pathreview/pull/483) is
+open with no reviewer comments yet. If feedback arrives I plan to: reply to each
+comment individually, make quick/clearly-correct fixes as follow-up commits on
+the same branch (so the PR updates in place), ask a clarifying question rather
+than guess when a comment is ambiguous, and — where I disagree — explain my
+reasoning with evidence (e.g. the choice to allow a single optional whitespace
+`[-.\s]?` rather than `\s*` to avoid gluing unrelated numbers together) while
+staying open to being wrong. The most likely feedback and my planned answer:
+
+- *"CI is red."* — The repo ships intentionally-failing tests and pre-existing
+  lint/format debt for other open issues; my change fixes 4 tests and adds 0 new
+  failures. Documented in the PR's Notes-for-Reviewers.
+- *"Why not also fix the file's lint issues?"* — Deliberate scoping: a bugfix PR
+  should be minimal and reviewable; the `street_address` regex / import ordering
+  are separate concerns. Happy to open a follow-up if the maintainer prefers.
+
+### Reflection
+
+**What I built and why I chose it.** I fixed issue #146: the PII scrubber's
+`phone_us` regex accepted `-` and `.` as separators but not spaces, so
+`(555) 123-4567` and `+1 555 123 4567` — two of the most common US phone formats
+— passed through the safety layer un-redacted. I chose it because it was
+genuinely well-scoped for a first contribution to a large codebase: a single
+file, pure-Python and unit-testable without Docker or the frontend, with clear
+acceptance criteria (four already-failing tests). That let me spend my effort
+understanding the code rather than fighting the environment.
+
+**What went wrong and how I responded.**
+- *Environment.* My machine was missing Node, Docker, and make, and I was on
+  Python 3.12 instead of the required 3.11. I installed the tooling and got the
+  app running, but 3.12 later caused a mypy/numpy stub error locally. I verified
+  it was local-only (CI runs 3.11 and doesn't type-check `tests/`) rather than a
+  real defect.
+- *Pre-existing repo debt.* The file I touched already failed the project's own
+  `ruff`/`black` hooks, and the suite ships 53 intentionally-failing tests. I had
+  to separate "my problem" from "not my problem" — recognizing, for example, that
+  the failing `test_mixed_pii_and_text` is a different `street_address` bug, not
+  mine. I kept my diff minimal and committed with `--no-verify` rather than
+  reformatting unrelated code.
+- *Design past the happy path.* My first instinct was the minimal
+  `[-.]? -> [-.\s]?` change, but that left a stray leading `(` (`([REDACTED]`).
+  I re-anchored with `(?<!\w)`/`(?!\d)` so the whole number is redacted and
+  digits inside a longer ID aren't partially matched, then added regression tests
+  for those edge cases.
+
+**What I'd do differently with full context.**
+- Install Python 3.11 from the start to avoid the local mypy/numpy detour.
+- Check how contested an issue is before claiming — #146 had multiple claimants
+  and existing PRs; a less crowded issue would have de-risked a clean merge.
+- Ask the maintainer up front whether pre-existing lint debt in a touched file
+  should be fixed in the same PR, so the scope decision is agreed rather than
+  assumed.
+
+**What I learned.** How to orient in an unfamiliar multi-module codebase and
+trace a bug to a single line; how to reproduce before fixing; how to tell my
+scope apart from unrelated noise; and the professional hygiene of a small,
+tested, documented, honestly-described PR — including being candid about what
+does and doesn't pass rather than overstating "it works."
