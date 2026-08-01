@@ -99,7 +99,7 @@ matching digits inside a longer numeric run.
   (the 4 I fixed now pass; the remaining 49 are unrelated seeded failures for
   other issues). No previously-passing test broke.
 - [x] 4. Quality gate — my changed lines are `ruff`, `black`, and `mypy` clean.
-- [ ] 5. Open the PR (next step).
+- [x] 5. Open the PR — https://github.com/ascherj/pathreview/pull/483
 
 **Edge cases handled beyond the happy path:** parenthesized-with-space
 `(555) 123-4567`, no-space `(555)123-4567`, all-spaces `555 123 4567`,
@@ -122,7 +122,7 @@ the existing `TestPIIScrubber` pattern — full redaction of the parenthesized
 format, a loop over four space-containing formats, a `detect()` value check, and
 a guard that a long numeric ID is not treated as a phone number.
 
-**Pull request link:** _[to be added when the PR is opened]_
+**Pull request link:** https://github.com/ascherj/pathreview/pull/483
 
 **How to test the fix:**
 ```bash
