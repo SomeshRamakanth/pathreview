@@ -133,63 +133,73 @@ All phone-related tests pass; the only remaining failure in that file
 
 ## Week 10 — Iteration & reflection
 
-### Review status & response
+### Reviewer feedback
 
-As of submission, [PR #483](https://github.com/ascherj/pathreview/pull/483) is
-open with no reviewer comments yet. If feedback arrives I plan to: reply to each
-comment individually, make quick/clearly-correct fixes as follow-up commits on
-the same branch (so the PR updates in place), ask a clarifying question rather
-than guess when a comment is ambiguous, and — where I disagree — explain my
-reasoning with evidence (e.g. the choice to allow a single optional whitespace
-`[-.\s]?` rather than `\s*` to avoid gluing unrelated numbers together) while
-staying open to being wrong. The most likely feedback and my planned answer:
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
 
-- *"CI is red."* — The repo ships intentionally-failing tests and pre-existing
-  lint/format debt for other open issues; my change fixes 4 tests and adds 0 new
-  failures. Documented in the PR's Notes-for-Reviewers.
-- *"Why not also fix the file's lint issues?"* — Deliberate scoping: a bugfix PR
-  should be minimal and reviewable; the `street_address` regex / import ordering
-  are separate concerns. Happy to open a follow-up if the maintainer prefers.
+**Summary of feedback:**
+No reviewer feedback came in. (Per the Summer 2026 course note, maintainer
+review is not a feature this term.) [PR #483](https://github.com/ascherj/pathreview/pull/483)
+remains open and unreviewed as of the Week 10 deadline.
+
+**How you responded:**
+No changes were required since no feedback arrived. If a review does come in, my
+plan is to reply to each comment individually, make quick/clearly-correct fixes
+as follow-up commits on the same branch (so the PR updates in place), ask a
+clarifying question rather than guess when a comment is ambiguous, and — where I
+disagree — explain my reasoning with evidence (e.g. why I allowed a single
+optional whitespace `[-.\s]?` instead of `\s*`, to avoid gluing unrelated numbers
+together) while staying open to being wrong.
+
+---
 
 ### Reflection
 
-**What I built and why I chose it.** I fixed issue #146: the PII scrubber's
-`phone_us` regex accepted `-` and `.` as separators but not spaces, so
-`(555) 123-4567` and `+1 555 123 4567` — two of the most common US phone formats
-— passed through the safety layer un-redacted. I chose it because it was
-genuinely well-scoped for a first contribution to a large codebase: a single
-file, pure-Python and unit-testable without Docker or the frontend, with clear
-acceptance criteria (four already-failing tests). That let me spend my effort
-understanding the code rather than fighting the environment.
+**What was harder than you expected?**
+The fix itself was one line; almost everything around it was the hard part. I
+expected to spend my time on the regex, but I spent it on the environment and on
+figuring out the repo's true state. Setup alone meant installing Node, Docker,
+and make. Then, when I finally went to commit, the project's own pre-commit hooks
+blocked me — not because of my code, but because the file I touched already
+failed the repo's `ruff`/`black` rules and my Python 3.12 tripped a mypy/numpy
+stub error. Untangling "is this my bug or the repo's?" took more judgment than
+writing the fix did.
 
-**What went wrong and how I responded.**
-- *Environment.* My machine was missing Node, Docker, and make, and I was on
-  Python 3.12 instead of the required 3.11. I installed the tooling and got the
-  app running, but 3.12 later caused a mypy/numpy stub error locally. I verified
-  it was local-only (CI runs 3.11 and doesn't type-check `tests/`) rather than a
-  real defect.
-- *Pre-existing repo debt.* The file I touched already failed the project's own
-  `ruff`/`black` hooks, and the suite ships 53 intentionally-failing tests. I had
-  to separate "my problem" from "not my problem" — recognizing, for example, that
-  the failing `test_mixed_pii_and_text` is a different `street_address` bug, not
-  mine. I kept my diff minimal and committed with `--no-verify` rather than
-  reformatting unrelated code.
-- *Design past the happy path.* My first instinct was the minimal
-  `[-.]? -> [-.\s]?` change, but that left a stray leading `(` (`([REDACTED]`).
-  I re-anchored with `(?<!\w)`/`(?!\d)` so the whole number is redacted and
-  digits inside a longer ID aren't partially matched, then added regression tests
-  for those edge cases.
+**What did you learn about working in a large codebase?**
+Contributing to someone else's production code is mostly about restraint and
+respect for what's already there. On my own projects I change whatever I want;
+here I had to (1) establish a baseline first — I ran the whole suite before
+touching anything and found 53 tests already failing, which is the only reason I
+could later prove my change fixed 4 and broke 0; (2) scope tightly — I left the
+file's unrelated lint debt and the separate `test_mixed_pii_and_text`
+(`street_address`) bug alone instead of "helpfully" fixing everything; and
+(3) follow their conventions rather than mine — Conventional Commit messages, the
+branch-naming rule, the PR template, and the existing test patterns.
 
-**What I'd do differently with full context.**
-- Install Python 3.11 from the start to avoid the local mypy/numpy detour.
-- Check how contested an issue is before claiming — #146 had multiple claimants
-  and existing PRs; a less crowded issue would have de-risked a clean merge.
-- Ask the maintainer up front whether pre-existing lint debt in a touched file
-  should be fixed in the same PR, so the scope decision is agreed rather than
-  assumed.
+**How did AI tools help — and where did they fall short?**
+AI was most useful for speed of orientation: locating the buggy pattern in an
+unfamiliar multi-module project, reasoning through the regex edge cases, and
+drafting the plan, tests, and PR write-up in the project's style. Where it fell
+short was judgment that needed real context — deciding to scope the diff narrowly
+and commit with `--no-verify` instead of reformatting the whole file, recognizing
+that the red test suite was seeded-by-design rather than my breakage, and
+diagnosing the Python-version issue as local-only. AI could propose options, but
+I had to run the tests, read the actual output, and own those calls — and verify
+every claim before it went in the PR rather than trusting "it should work."
 
-**What I learned.** How to orient in an unfamiliar multi-module codebase and
-trace a bug to a single line; how to reproduce before fixing; how to tell my
-scope apart from unrelated noise; and the professional hygiene of a small,
-tested, documented, honestly-described PR — including being candid about what
-does and doesn't pass rather than overstating "it works."
+**What would you do differently if you started over?**
+Three things. First, match the required environment exactly (Python 3.11) from
+day one — using the version I already had cost me a debugging detour. Second,
+check how contested an issue is before claiming it; #146 already had multiple
+claimants and open PRs, so even a clean fix was unlikely to be "the" merge.
+Third, run the full test suite on the very first day to learn the repo's real
+baseline before planning, instead of discovering the 53 pre-existing failures
+mid-way.
+
+**What are you most proud of from this module?**
+That I kept the contribution small and honest. It would have been easy to sprawl
+— fix the other failing tests, reformat the file, overstate "all tests pass." I
+resisted that: a one-line fix with four focused tests, a PR that documents
+exactly what passes and what doesn't and why, and a clear line drawn around what
+was and wasn't mine to fix. Learning to say "this part is out of scope" clearly
+felt like the most professional thing I did all module.
